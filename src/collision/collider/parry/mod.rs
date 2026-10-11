@@ -1561,6 +1561,11 @@ fn scale_shape(
     scale: Vector,
     num_subdivisions: u32,
 ) -> Result<SharedShape, UnsupportedShape> {
+    // Parry's own shapes cannot represent a reflection, so they take the scale's
+    // magnitude. A custom shape's `scale_dyn` receives the signed scale and
+    // decides for itself (`dust_physics::VdbShape` mirrors its voxels along the
+    // negative axes).
+    let signed_scale = scale.real();
     let scale = scale.abs().real();
     match shape.as_typed_shape() {
         TypedShape::Cuboid(s) => Ok(SharedShape::new(s.scaled(scale.abs()))),
@@ -1613,7 +1618,7 @@ fn scale_shape(
             }
             Some(scaled) => Ok(SharedShape::new(scaled)),
         },
-        TypedShape::Voxels(v) => Ok(SharedShape::new(v.clone().scaled(scale))),
+        TypedShape::Voxels(v) => Ok(SharedShape::new(v.clone().scaled(signed_scale))),
         TypedShape::HeightField(h) => Ok(SharedShape::new(h.clone().scaled(scale))),
         #[cfg(feature = "2d")]
         TypedShape::ConvexPolygon(cp) => match cp.clone().scaled(scale) {
@@ -1759,7 +1764,7 @@ fn scale_shape(
                 }
             }
             _shape
-                .scale_dyn(scale, num_subdivisions)
+                .scale_dyn(signed_scale, num_subdivisions)
                 .map(|scaled| SharedShape(alloc::sync::Arc::from(scaled)))
                 .ok_or(parry::query::Unsupported)
         }
