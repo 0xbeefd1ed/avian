@@ -10,7 +10,8 @@ use parry::{
     query::{
         ClosestPoints, Contact, ContactManifold, ContactManifoldsWorkspace, DefaultQueryDispatcher,
         NonlinearRigidMotion, PersistentQueryDispatcher, QueryDispatcher as _, ShapeCastHit,
-        ShapeCastOptions, Unsupported, details::NormalConstraints,
+        ShapeCastOptions, ShapeDistance, ShapeIntersection, Unsupported,
+        details::NormalConstraints,
     },
     shape::Shape,
 };
@@ -173,14 +174,14 @@ impl QueryDispatcher {
     /// Computes the minimum distance separating two shapes, like
     /// [`parry::query::distance`] but routed through the installed dispatcher.
     ///
-    /// Returns `0.0` if the shapes are touching or penetrating.
+    /// The returned distance is `0.0` if the shapes are touching or penetrating.
     pub fn distance(
         &self,
         pos1: &Pose,
         g1: &dyn Shape,
         pos2: &Pose,
         g2: &dyn Shape,
-    ) -> Result<Real, Unsupported> {
+    ) -> Result<ShapeDistance, Unsupported> {
         let pos12 = pos1.inv_mul(pos2);
         dispatch_query!(self, distance, &pos12, g1, g2)
     }
@@ -193,7 +194,7 @@ impl QueryDispatcher {
         g1: &dyn Shape,
         pos2: &Pose,
         g2: &dyn Shape,
-    ) -> Result<bool, Unsupported> {
+    ) -> Result<ShapeIntersection, Unsupported> {
         let pos12 = pos1.inv_mul(pos2);
         dispatch_query!(self, intersection_test, &pos12, g1, g2)
     }

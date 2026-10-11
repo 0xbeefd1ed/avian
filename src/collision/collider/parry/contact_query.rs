@@ -237,7 +237,7 @@ pub fn contact_manifolds(
             return None;
         }
 
-        let subpos1 = manifold.subshape_pos1.unwrap_or_default();
+        let subpos1 = manifold.subshape_pos1().copied().unwrap_or_default();
         let local_normal: RVector = (subpos1.rotation * manifold.local_n1).normalize();
         let normal = rotation1 * local_normal.f32();
 
@@ -453,7 +453,7 @@ pub fn distance(
             &isometry2,
             collider2.shape_scaled().0.as_ref(),
         )
-        .map(|distance| distance.f32())
+        .map(|distance| distance.distance.f32())
 }
 
 /// Tests whether two [`Collider`]s are intersecting each other.
@@ -519,12 +519,14 @@ pub fn intersection_test(
     let isometry1 = make_pose(position1, rotation1);
     let isometry2 = make_pose(position2, rotation2);
 
-    query_dispatcher.intersection_test(
-        &isometry1,
-        collider1.shape_scaled().0.as_ref(),
-        &isometry2,
-        collider2.shape_scaled().0.as_ref(),
-    )
+    query_dispatcher
+        .intersection_test(
+            &isometry1,
+            collider1.shape_scaled().0.as_ref(),
+            &isometry2,
+            collider2.shape_scaled().0.as_ref(),
+        )
+        .map(|intersection| intersection.intersecting)
 }
 
 /// The way the [time of impact](time_of_impact) computation was terminated.
